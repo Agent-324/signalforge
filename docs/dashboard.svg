@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <rect width="1200" height="520" rx="18" fill="#09111f"/>
+  <text x="54" y="58" fill="#5eead4" font-family="sans-serif" font-size="13" font-weight="700" letter-spacing="3">AI RELIABILITY LAB / LOCAL-FIRST</text>
+  <text x="54" y="100" fill="#e8eef5" font-family="sans-serif" font-size="35" font-weight="700">Signal<tspan fill="#5eead4">Forge</tspan></text>
+  <text x="54" y="127" fill="#91a0b5" font-family="sans-serif" font-size="16">Turn raw model traces into evidence you can act on.</text>
+  <g fill="#101d31" stroke="#21324a">
+    <rect x="54" y="165" width="250" height="100" rx="12"/><rect x="320" y="165" width="250" height="100" rx="12"/><rect x="586" y="165" width="250" height="100" rx="12"/><rect x="852" y="165" width="294" height="100" rx="12"/>
+    <rect x="54" y="288" width="782" height="178" rx="12"/><rect x="852" y="288" width="294" height="178" rx="12"/>
+  </g>
+  <g font-family="sans-serif"><g fill="#91a0b5" font-size="12"><text x="74" y="191">TRACES EVALUATED</text><text x="340" y="191">MEAN QUALITY</text><text x="606" y="191">HEALTHY / ELEVATED</text><text x="872" y="191">MODELS OBSERVED</text></g><g fill="#e8eef5" font-size="31" font-weight="700"><text x="74" y="237">4</text><text x="340" y="237" fill="#5eead4">81%</text><text x="606" y="237">2 / 1</text><text x="872" y="237">2</text></g><g fill="#e8eef5" font-size="16"><text x="76" y="320">RECENT TRACES</text><text x="872" y="320">WHAT NEEDS ATTENTION</text></g><g fill="#5eead4" font-size="12"><text x="76" y="359">demo-004</text><text x="76" y="397">demo-002</text><text x="76" y="435">demo-001</text></g><g fill="#91a0b5" font-size="12"><text x="220" y="359">Summarize the incident timeline</text><text x="220" y="397">Can I trust this medical result?</text><text x="220" y="435">Explain vector search in one paragraph</text></g><g fill="#fbbf24" font-size="13"><text x="872" y="357">Confidence</text><text x="872" y="397">Latency</text><text x="872" y="437">Helpfulness</text></g><g fill="#91a0b5" font-size="12"><text x="1080" y="357">2 signals</text><text x="1080" y="397">1 signal</text><text x="1080" y="437">1 signal</text></g></g>
+</svg>

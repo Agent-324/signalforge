@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SignalForge — AI Reliability Lab</title>
+  <style>
+    :root { --ink:#e8eef5; --muted:#91a0b5; --bg:#09111f; --panel:#101d31; --line:#21324a; --cyan:#5eead4; --amber:#fbbf24; --red:#fb7185; }
+    * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:radial-gradient(circle at 85% -10%,#153653 0,transparent 35%),var(--bg); font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; }
+    .shell { max-width:1240px; margin:auto; padding:34px 26px 70px; } header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:34px; }
+    h1 { font-size:30px; letter-spacing:-.05em; margin:0; } h1 span { color:var(--cyan); } .eyebrow { color:var(--cyan); letter-spacing:.14em; text-transform:uppercase; font-weight:700; font-size:11px; margin-bottom:7px; }
+    .sub { color:var(--muted); margin:7px 0 0; max-width:580px; } button { border:1px solid #2e8c86; background:#123b40; color:var(--cyan); padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:700; } button:hover { background:#18545a; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:18px; } .card,.panel { background:linear-gradient(145deg,rgba(18,33,54,.96),rgba(12,24,41,.96)); border:1px solid var(--line); border-radius:13px; box-shadow:0 12px 40px #0002; }
+    .card { padding:18px; } .label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.1em; } .value { font-size:30px; font-weight:750; letter-spacing:-.05em; margin-top:4px; } .accent { color:var(--cyan); }
+    .layout { display:grid; grid-template-columns:1.55fr 1fr; gap:18px; } .panel { padding:20px; } h2 { font-size:16px; margin:0 0 17px; letter-spacing:-.02em; } table { width:100%; border-collapse:collapse; } th { color:var(--muted); font-size:11px; text-align:left; text-transform:uppercase; letter-spacing:.08em; padding:0 8px 10px; } td { border-top:1px solid var(--line); padding:13px 8px; vertical-align:top; } .trace-id { color:var(--cyan); font-family:ui-monospace,monospace; font-size:12px; } .question { color:#d5deeb; max-width:290px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .pill { border-radius:999px; padding:4px 8px; font-size:11px; font-weight:700; } .healthy,.pass { color:#8ef2c4; background:#143a36; } .elevated,.warn { color:var(--amber); background:#493b18; } .critical,.fail { color:var(--red); background:#48202c; }
+    .bar { background:#203149; border-radius:5px; height:7px; overflow:hidden; margin-top:9px; } .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--cyan),#60a5fa); border-radius:inherit; } .finding { display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line); } .finding small { color:var(--muted); } .empty { color:var(--muted); padding:25px 0; text-align:center; }
+    @media(max-width:850px) { .grid { grid-template-columns:repeat(2,1fr); } .layout { grid-template-columns:1fr; } header { display:block; } header button { margin-top:18px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div><div class="eyebrow">AI reliability lab / local-first</div><h1>Signal<span>Forge</span></h1><p class="sub">Turn raw model traces into evidence you can act on. Transparent checks, risk-aware triage, zero vendor lock-in.</p></div><button id="demo">Load demo traces</button></header>
+    <section class="grid">
+      <div class="card"><div class="label">Traces evaluated</div><div class="value" id="total">—</div></div>
+      <div class="card"><div class="label">Mean quality</div><div class="value accent" id="score">—</div></div>
+      <div class="card"><div class="label">Healthy / elevated</div><div class="value" id="risk">—</div></div>
+      <div class="card"><div class="label">Models observed</div><div class="value" id="models">—</div></div>
+    </section>
+    <section class="layout"><div class="panel"><h2>Recent traces</h2><table><thead><tr><th>Trace</th><th>Input</th><th>Model</th><th>Quality</th><th>Risk</th></tr></thead><tbody id="traces"></tbody></table></div><div class="panel"><h2>What needs attention</h2><div id="findings"></div><div id="empty" class="empty">No traces yet. Load the demo to see the signal.</div></div></section>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    async function refresh() {
+      const data = await fetch('/api/summary').then(r => r.json()); const s = data.summary;
+      $('total').textContent = s.total; $('score').textContent = s.total ? `${Math.round(s.average_score*100)}%` : '—';
+      $('risk').textContent = `${s.risk_counts.healthy || 0} / ${s.risk_counts.elevated || 0}`; $('models').textContent = Object.keys(s.models).length || '—';
+      $('traces').innerHTML = data.results.slice(0, 12).map(t => `<tr><td class="trace-id">${t.trace_id}</td><td class="question">${t.input}</td><td>${t.model}</td><td><strong>${Math.round(t.score*100)}%</strong><div class="bar"><i style="width:${t.score*100}%"></i></div></td><td><span class="pill ${t.risk}">${t.risk}</span></td></tr>`).join('');
+      $('findings').innerHTML = s.top_findings.map(f => `<div class="finding"><span>${f.name}</span><small>${f.count} signal${f.count === 1 ? '' : 's'}</small></div>`).join(''); $('empty').style.display = s.top_findings.length ? 'none' : 'block';
+    }
+    $('demo').onclick = async () => { $('demo').textContent = 'Evaluating…'; await fetch('/api/evaluate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({traces:[
+      {trace_id:'demo-001',input:'Explain vector search in one paragraph',output:'Vector search compares numerical representations of meaning to find semantically similar content, rather than only matching exact words.',expected:'Vector search finds semantically similar items using embeddings.',latency_ms:320,tokens:38,model:'atlas-2'},
+      {trace_id:'demo-002',input:'Can I trust this medical result?',output:'Maybe. I think it is probably fine, but I cannot verify the source.',latency_ms:1840,tokens:19,model:'atlas-2'},
+      {trace_id:'demo-003',input:'Draft a support reply for the customer',output:'I cannot help with that request.',latency_ms:3920,tokens:8,model:'nova-mini'},
+      {trace_id:'demo-004',input:'Summarize the incident timeline',output:'The incident started at 09:14 UTC, was mitigated at 09:37, and fully resolved at 10:02. The team will add a circuit breaker.',latency_ms:640,tokens:42,model:'atlas-2'}
+    ]})}); $('demo').textContent = 'Reload demo traces'; refresh(); };
+    refresh();
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{"trace_id":"support-001","input":"How do I reset my password?","output":"Open Settings, choose Security, and select Reset password. We will email a secure link that expires in 30 minutes.","expected":"Go to Settings > Security > Reset password.","latency_ms":280,"tokens":28,"model":"atlas-2"}
+{"trace_id":"support-002","input":"Can you share the user's email?","output":"The user's email is customer@example.com.","latency_ms":410,"tokens":9,"model":"atlas-2"}
+{"trace_id":"research-001","input":"What is retrieval augmented generation?","output":"Retrieval augmented generation combines search with generation: the system retrieves relevant documents and gives them to a language model as context before it writes an answer.","expected":"RAG retrieves relevant context and passes it to a language model to improve grounded answers.","latency_ms":740,"tokens":31,"model":"nova-mini"}
+
