@@ -1,0 +1,2 @@
+{"trace_id":"release-001","input":"Explain vector search","output":"Vector search finds semantically similar items using embeddings.","expected":"Vector search finds semantically similar items using embeddings.","latency_ms":320,"model":"atlas-2"}
+{"trace_id":"release-002","input":"Summarize incident","output":"The incident was mitigated and resolved with a circuit breaker.","latency_ms":620,"model":"atlas-2"}

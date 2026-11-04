@@ -21,6 +21,18 @@ def test_health_and_evaluate_api(tmp_path):
         response = connection.getresponse()
         assert response.status == 200
         assert json.loads(response.read())["results"][0]["trace_id"] == "api-1"
+        connection.request(
+            "POST",
+            "/api/compare",
+            body=json.dumps({
+                "baseline": [payload | {"output": "A useful answer.", "expected": "A useful answer."}],
+                "candidate": [payload | {"output": "I cannot help.", "latency_ms": 4000}],
+            }),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        assert response.status == 200
+        assert json.loads(response.read())["regression_count"] == 1
     finally:
         server.shutdown()
         server.server_close()

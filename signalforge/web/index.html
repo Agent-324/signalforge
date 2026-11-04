@@ -13,13 +13,13 @@
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:18px; } .card,.panel { background:linear-gradient(145deg,rgba(18,33,54,.96),rgba(12,24,41,.96)); border:1px solid var(--line); border-radius:13px; box-shadow:0 12px 40px #0002; }
     .card { padding:18px; } .label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.1em; } .value { font-size:30px; font-weight:750; letter-spacing:-.05em; margin-top:4px; } .accent { color:var(--cyan); }
     .layout { display:grid; grid-template-columns:1.55fr 1fr; gap:18px; } .panel { padding:20px; } h2 { font-size:16px; margin:0 0 17px; letter-spacing:-.02em; } table { width:100%; border-collapse:collapse; } th { color:var(--muted); font-size:11px; text-align:left; text-transform:uppercase; letter-spacing:.08em; padding:0 8px 10px; } td { border-top:1px solid var(--line); padding:13px 8px; vertical-align:top; } .trace-id { color:var(--cyan); font-family:ui-monospace,monospace; font-size:12px; } .question { color:#d5deeb; max-width:290px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .pill { border-radius:999px; padding:4px 8px; font-size:11px; font-weight:700; } .healthy,.pass { color:#8ef2c4; background:#143a36; } .elevated,.warn { color:var(--amber); background:#493b18; } .critical,.fail { color:var(--red); background:#48202c; }
-    .bar { background:#203149; border-radius:5px; height:7px; overflow:hidden; margin-top:9px; } .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--cyan),#60a5fa); border-radius:inherit; } .finding { display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line); } .finding small { color:var(--muted); } .empty { color:var(--muted); padding:25px 0; text-align:center; }
+    .bar { background:#203149; border-radius:5px; height:7px; overflow:hidden; margin-top:9px; } .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--cyan),#60a5fa); border-radius:inherit; } .finding { display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line); } .finding small { color:var(--muted); } .empty { color:var(--muted); padding:25px 0; text-align:center; } .regressions { margin-top:18px; } .regression { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:13px 0; border-top:1px solid var(--line); } .regression small { color:var(--muted); display:block; margin-top:3px; } .delta { color:var(--red); font-weight:700; white-space:nowrap; }
     @media(max-width:850px) { .grid { grid-template-columns:repeat(2,1fr); } .layout { grid-template-columns:1fr; } header { display:block; } header button { margin-top:18px; } }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header><div><div class="eyebrow">AI reliability lab / local-first</div><h1>Signal<span>Forge</span></h1><p class="sub">Turn raw model traces into evidence you can act on. Transparent checks, risk-aware triage, zero vendor lock-in.</p></div><button id="demo">Load demo traces</button></header>
+    <header><div><div class="eyebrow">AI reliability lab / local-first</div><h1>Signal<span>Forge</span></h1><p class="sub">Turn raw model traces into evidence you can act on. Transparent checks, risk-aware triage, zero vendor lock-in.</p></div><div><button id="demo">Load demo traces</button> <button id="compare">Run regression</button></div></header>
     <section class="grid">
       <div class="card"><div class="label">Traces evaluated</div><div class="value" id="total">—</div></div>
       <div class="card"><div class="label">Mean quality</div><div class="value accent" id="score">—</div></div>
@@ -27,6 +27,7 @@
       <div class="card"><div class="label">Models observed</div><div class="value" id="models">—</div></div>
     </section>
     <section class="layout"><div class="panel"><h2>Recent traces</h2><table><thead><tr><th>Trace</th><th>Input</th><th>Model</th><th>Quality</th><th>Risk</th></tr></thead><tbody id="traces"></tbody></table></div><div class="panel"><h2>What needs attention</h2><div id="findings"></div><div id="empty" class="empty">No traces yet. Load the demo to see the signal.</div></div></section>
+    <section class="panel regressions"><h2>Release gate <span id="gate" class="pill">Not run</span></h2><div id="regressions" class="empty">Compare a baseline and candidate to detect quality regressions before release.</div></section>
   </main>
   <script>
     const $ = id => document.getElementById(id);
@@ -43,6 +44,13 @@
       {trace_id:'demo-003',input:'Draft a support reply for the customer',output:'I cannot help with that request.',latency_ms:3920,tokens:8,model:'nova-mini'},
       {trace_id:'demo-004',input:'Summarize the incident timeline',output:'The incident started at 09:14 UTC, was mitigated at 09:37, and fully resolved at 10:02. The team will add a circuit breaker.',latency_ms:640,tokens:42,model:'atlas-2'}
     ]})}); $('demo').textContent = 'Reload demo traces'; refresh(); };
+    $('compare').onclick = async () => { $('compare').textContent = 'Comparing…'; const baseline = [
+      {trace_id:'release-001',input:'Explain vector search',output:'Vector search finds semantically similar items using embeddings.',expected:'Vector search finds semantically similar items using embeddings.',latency_ms:320,model:'atlas-2'},
+      {trace_id:'release-002',input:'Summarize incident',output:'The incident was mitigated and resolved with a circuit breaker.',latency_ms:620,model:'atlas-2'}
+    ]; const candidate = [
+      baseline[0],
+      {trace_id:'release-002',input:'Summarize incident',output:'I cannot help with that request.',latency_ms:3900,model:'atlas-3'}
+    ]; const data = await fetch('/api/compare', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({baseline,candidate})}).then(r=>r.json()); const regressions = data.regressions || []; $('gate').textContent = data.pass ? 'PASS' : `${data.regression_count} regression${data.regression_count === 1 ? '' : 's'}`; $('gate').className = `pill ${data.pass ? 'healthy' : 'critical'}`; $('regressions').className = regressions.length ? '' : 'empty'; $('regressions').innerHTML = regressions.length ? regressions.map(r => `<div class="regression"><div><strong>${r.trace_id}</strong><small>${r.reasons.join(' · ')}</small></div><div class="delta">${Math.round(r.delta*100)}% <span class="pill ${r.severity}">${r.severity}</span></div></div>`).join('') : 'No regressions detected. Safe to ship.'; $('compare').textContent = 'Run regression'; };
     refresh();
   </script>
 </body>

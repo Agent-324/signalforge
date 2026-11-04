@@ -14,6 +14,7 @@ Most AI demos optimize for a happy-path chat. Production engineering is differen
 
 - **Explainable evaluation:** reference alignment, confidence language, safety/privacy, helpfulness, and latency checks each return a score, status, explanation, and evidence.
 - **Risk-aware triage:** aggregate scores become `healthy`, `elevated`, or `critical`, while individual findings preserve the reason.
+- **Release regression gates:** compare baseline and candidate trace sets, catch score/risk regressions, and surface dataset drift before shipping.
 - **Real service boundaries:** traces enter through a JSON API, are evaluated by a pure domain layer, and persist in SQLite.
 - **A product surface:** the dashboard is a responsive, dependency-free UI that makes the signal legible in seconds.
 - **Engineering discipline:** typed dataclasses, explicit input errors, bounded request bodies, deterministic tests, and CI from the first commit.
@@ -43,6 +44,14 @@ curl -X POST http://127.0.0.1:8000/api/evaluate \
   -d '{"trace_id":"quickstart-1","input":"What is RAG?","output":"RAG retrieves context before generation.","latency_ms":220,"model":"atlas-2"}'
 ```
 
+Compare two versions of an evaluation set in CI or locally:
+
+```bash
+signalforge compare examples/baseline.jsonl examples/candidate.jsonl
+```
+
+The comparison command exits with structured JSON suitable for a release gate and returns status `1` when regressions or removed traces are found. The HTTP equivalent is `POST /api/compare` with `baseline`, `candidate`, and an optional `threshold` (default `0.1`).
+
 ## Architecture
 
 ```text
@@ -68,6 +77,7 @@ The evaluator is deliberately dependency-free and deterministic. That makes it u
 | --- | --- |
 | `signalforge/models.py` | Validated trace and scoring domain types |
 | `signalforge/evaluator.py` | Explainable quality and risk checks |
+| `signalforge/regression.py` | Baseline-vs-candidate release gates |
 | `signalforge/store.py` | SQLite persistence boundary |
 | `signalforge/server.py` | Small, concurrent HTTP API and static app |
 | `signalforge/web/index.html` | Product dashboard |
@@ -77,7 +87,7 @@ The evaluator is deliberately dependency-free and deterministic. That makes it u
 ## Roadmap
 
 - Pluggable evaluators with a stable `Evaluator` protocol
-- Dataset/version tracking and baseline-vs-candidate regression gates
+- Dataset/version tracking and richer baseline-vs-candidate regression gates
 - OpenTelemetry trace ingestion
 - Embedding-backed semantic similarity and configurable policy packs
 - Exportable review reports for human-in-the-loop annotation
